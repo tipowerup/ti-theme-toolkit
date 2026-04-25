@@ -3,11 +3,41 @@
     "version": "0.1.0",
     "description": "Shared frontend infrastructure for TiPowerUp TastyIgniter themes — Tailwind preset, Vite preset, dark-mode Alpine store, and CSS token defaults.",
     "type": "module",
+    "license": "MIT",
+    "author": "TiPowerUp",
+    "homepage": "https://github.com/tipowerup/ti-theme-toolkit#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tipowerup/ti-theme-toolkit.git"
+    },
+    "bugs": {
+        "url": "https://github.com/tipowerup/ti-theme-toolkit/issues"
+    },
+    "keywords": [
+        "tastyigniter",
+        "tailwind",
+        "tailwind-preset",
+        "vite",
+        "vite-preset",
+        "alpinejs",
+        "dark-mode",
+        "theme"
+    ],
+    "files": [
+        "tailwind-preset.js",
+        "vite-preset.js",
+        "resources/src/**",
+        "README.md",
+        "LICENSE"
+    ],
     "exports": {
         "./tailwind-preset": "./tailwind-preset.js",
         "./vite-preset": "./vite-preset.js",
         "./js/dark-mode": "./resources/src/js/dark-mode.js",
         "./css/tokens.css": "./resources/src/css/tokens.css"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "peerDependencies": {
         "alpinejs": "^3.0",

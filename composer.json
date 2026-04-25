@@ -3,6 +3,24 @@
     "description": "Shared infrastructure package for TiPowerUp TastyIgniter themes — AbstractThemeServiceProvider, ColorHelper, BannerManager, BaseSchema and more.",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "tastyigniter",
+        "tastyigniter-theme",
+        "theme-toolkit",
+        "livewire",
+        "laravel"
+    ],
+    "homepage": "https://github.com/tipowerup/ti-theme-toolkit",
+    "authors": [
+        {
+            "name": "TiPowerUp",
+            "homepage": "https://github.com/tipowerup"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/tipowerup/ti-theme-toolkit/issues",
+        "source": "https://github.com/tipowerup/ti-theme-toolkit"
+    },
     "require": {
         "php": "^8.2",
         "tastyigniter/core": "^4.0",
