@@ -1,0 +1,79 @@
+/**
+ * tokens.css — CSS custom property defaults for the TiPowerUp theme system.
+ *
+ * Import this file first in your theme's app.css, before @tailwind directives:
+ *
+ *   @import '@tipowerup/ti-theme-toolkit/css/tokens.css';
+ *   @tailwind base;
+ *   @tailwind components;
+ *   @tailwind utilities;
+ *
+ * These values serve as fallbacks. At runtime the PHP layer (ThemePayloadResolver
+ * + ColorHelper) injects the admin-saved palette as an inline `style` attribute
+ * on `<html>`, which takes precedence over these defaults.
+ *
+ * Full list of CSS variables used by the palette system:
+ *
+ *   Color palette (primary):
+ *     --color-primary          Base primary "r g b" triplet
+ *     --color-primary-50       Very light tint (95% toward white)
+ *     --color-primary-100      Light tint (88% toward white)
+ *     --color-primary-400      Medium tint (20% toward white)
+ *     --color-primary-light    Hover/focus tint (25% toward white)
+ *     --color-primary-dark     Active shade (15% toward black)
+ *     --color-primary-900      Very dark shade (70% toward black)
+ *
+ *   Semantic colors (secondary, status):
+ *     --color-secondary        Secondary brand color
+ *     --color-secondary-light  Lighter variant of secondary
+ *     --color-secondary-dark   Darker variant of secondary
+ *     --color-success          Green — success states
+ *     --color-danger           Red — error/danger states
+ *     --color-warning          Amber — warning states
+ *     --color-info             Blue — informational states
+ *
+ *   Neutral surface tokens (theme-controlled, not derived from primary):
+ *     --color-text             Main body text
+ *     --color-text-muted       Secondary/muted text
+ *     --color-body             Page background
+ *     --color-surface          Card / panel background
+ *     --color-border           Border / divider color
+ */
+
+:root {
+    /* Primary palette — overridden at runtime by ThemePayloadResolver */
+    --color-primary: 249 115 22;
+    --color-primary-50: 255 247 237;
+    --color-primary-100: 255 237 213;
+    --color-primary-400: 251 146 60;
+    --color-primary-light: 253 186 116;
+    --color-primary-dark: 234 88 12;
+    --color-primary-900: 124 45 18;
+
+    /* Secondary palette */
+    --color-secondary: 108 117 125;
+    --color-secondary-light: 156 163 175;
+    --color-secondary-dark: 75 85 99;
+
+    /* Semantic status colors */
+    --color-success: 40 167 69;
+    --color-danger: 220 53 69;
+    --color-warning: 255 193 7;
+    --color-info: 23 162 184;
+
+    /* Light-mode neutral tokens */
+    --color-text: 33 37 41;
+    --color-text-muted: 108 117 125;
+    --color-body: 255 255 255;
+    --color-surface: 248 249 250;
+    --color-border: 233 236 239;
+}
+
+/* Dark-mode neutral tokens — applied when html.dark is present */
+.dark {
+    --color-text: 248 249 250;
+    --color-text-muted: 173 181 189;
+    --color-body: 33 37 41;
+    --color-surface: 52 58 64;
+    --color-border: 73 80 87;
+}

@@ -1,0 +1,25 @@
+{
+    "name": "tipowerup/ti-theme-toolkit",
+    "description": "Shared infrastructure package for TiPowerUp TastyIgniter themes — AbstractThemeServiceProvider, ColorHelper, BannerManager, BaseSchema and more.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "tastyigniter/core": "^4.0",
+        "livewire/livewire": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TiPowerUp\\ThemeToolkit\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TiPowerUp\\ThemeToolkit\\ToolkitServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
