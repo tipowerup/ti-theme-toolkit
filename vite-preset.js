@@ -41,13 +41,15 @@ export function toolkitPreset({ input }) {
             manifest: true,
 
             rollupOptions: {
-                input: input.reduce((acc, entry, index) => {
-                    // Derive a human-readable key from the file name.
-                    const name = entry.split('/').pop().replace(/\.[^.]+$/, '') || `entry${index}`;
-                    acc[name] = entry;
-
-                    return acc;
-                }, {}),
+                /**
+                 * Pass inputs as an array so Rollup derives entry names from
+                 * each file's basename. Using an object keyed by basename
+                 * silently drops collisions when two entries share a name
+                 * (e.g. `app.css` + `app.js`). With the array form, Rollup
+                 * handles JS entries via `entryFileNames` and routes the CSS
+                 * to `assetFileNames`, so both emit correctly.
+                 */
+                input: input,
 
                 output: {
                     entryFileNames: 'js/[name].js',
