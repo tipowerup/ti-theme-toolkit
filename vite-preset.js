@@ -8,7 +8,10 @@
  *
  *   export default defineConfig({
  *     ...toolkitPreset({
- *       input: ['resources/src/css/app.css', 'resources/src/js/app.js'],
+ *       input: {
+ *         app: 'resources/src/js/app.js',
+ *         styles: 'resources/src/css/app.css',
+ *       },
  *     }),
  *   });
  *
@@ -25,10 +28,14 @@
 /**
  * Build a Vite config object suitable for a TiPowerUp theme package.
  *
- * @param {object}   options
- * @param {string[]} options.input   Entry point paths relative to the package
- *                                   root, e.g.
- *                                   `['resources/src/css/app.css', 'resources/src/js/app.js']`
+ * `input` is forwarded to Rollup unchanged. Pass an object whose keys are
+ * the chunk names you want (`{ app: '...js', styles: '...css' }`) so JS
+ * entries get stable `[name]` values in `entryFileNames`. Arrays also work
+ * but Rollup auto-derives names from basenames, which produces collisions
+ * (and `app2.js`-style suffixes) when multiple entries share a basename.
+ *
+ * @param {object} options
+ * @param {Record<string, string> | string[]} options.input  Rollup input
  * @returns {import('vite').UserConfig}
  */
 export function toolkitPreset({ input }) {
@@ -41,15 +48,7 @@ export function toolkitPreset({ input }) {
             manifest: true,
 
             rollupOptions: {
-                /**
-                 * Pass inputs as an array so Rollup derives entry names from
-                 * each file's basename. Using an object keyed by basename
-                 * silently drops collisions when two entries share a name
-                 * (e.g. `app.css` + `app.js`). With the array form, Rollup
-                 * handles JS entries via `entryFileNames` and routes the CSS
-                 * to `assetFileNames`, so both emit correctly.
-                 */
-                input: input,
+                input,
 
                 output: {
                     entryFileNames: 'js/[name].js',
