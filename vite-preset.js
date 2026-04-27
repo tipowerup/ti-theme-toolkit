@@ -6,16 +6,16 @@
  *   import { defineConfig } from 'vite';
  *   import { toolkitPreset } from '@tipowerup/ti-theme-toolkit/vite-preset';
  *
- *   export default defineConfig({
- *     ...toolkitPreset({
- *       input: {
- *         app: 'resources/src/js/app.js',
- *         styles: 'resources/src/css/app.css',
- *       },
- *     }),
- *   });
+ *   export default defineConfig(toolkitPreset({
+ *     themeCode: 'my-theme',
+ *     input: {
+ *       app: 'resources/src/js/app.js',
+ *       styles: 'resources/src/css/app.css',
+ *     },
+ *   }));
  *
  * The preset configures:
+ * - `base: '/vendor/<themeCode>/'` (TastyIgniter asset path)
  * - `publicDir: false` (TastyIgniter handles static assets separately)
  * - `build.outDir: 'public'` with `emptyOutDir: false`
  * - `build.manifest: true` (for asset versioning / cache-busting)
@@ -28,18 +28,25 @@
 /**
  * Build a Vite config object suitable for a TiPowerUp theme package.
  *
- * `input` is forwarded to Rollup unchanged. Pass an object whose keys are
- * the chunk names you want (`{ app: '...js', styles: '...css' }`) so JS
- * entries get stable `[name]` values in `entryFileNames`. Arrays also work
- * but Rollup auto-derives names from basenames, which produces collisions
- * (and `app2.js`-style suffixes) when multiple entries share a basename.
+ * `input` is forwarded to Rollup unchanged. Pass an object whose keys are the
+ * chunk names you want (`{ app: '...js', styles: '...css' }`) so JS entries
+ * get stable `[name]` values in `entryFileNames`. Arrays also work but Rollup
+ * auto-derives names from basenames, which produces collisions (and
+ * `app2.js`-style suffixes) when multiple entries share a basename.
  *
  * @param {object} options
+ * @param {string} options.themeCode  TastyIgniter theme code; sets `base` to
+ *                                    `/vendor/<themeCode>/`.
  * @param {Record<string, string> | string[]} options.input  Rollup input
  * @returns {import('vite').UserConfig}
  */
-export function toolkitPreset({ input }) {
+export function toolkitPreset({ themeCode, input }) {
+    if (!themeCode) {
+        throw new Error('toolkitPreset: `themeCode` is required.');
+    }
+
     return {
+        base: `/vendor/${themeCode}/`,
         publicDir: false,
 
         build: {

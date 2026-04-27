@@ -37,18 +37,18 @@ use TiPowerUp\ThemeToolkit\Support\ThemePayloadResolver;
  * view composer using a small set of abstract getters that the child theme
  * implements.
  *
- * Minimal child-theme service provider:
+ * Minimal child-theme service provider — only `themeCode()` and `phpNamespace()`
+ * are required; paths default to the standard theme layout:
  * <code>
  * class ServiceProvider extends AbstractThemeServiceProvider
  * {
- *     protected function themeCode(): string           { return 'my-theme'; }
- *     protected function phpNamespace(): string        { return 'MyVendor\\MyTheme'; }
- *     protected function viewsPath(): string           { return __DIR__.'/../resources/views'; }
- *     protected function langPath(): string            { return __DIR__.'/../resources/lang'; }
- *     protected function livewirePath(): string        { return __DIR__.'/Livewire'; }
- *     protected function bladeComponentsPath(): string { return __DIR__.'/View/Components'; }
+ *     protected function themeCode(): string    { return 'my-theme'; }
+ *     protected function phpNamespace(): string { return 'MyVendor\\MyTheme'; }
  * }
  * </code>
+ *
+ * Override any path getter (`viewsPath`, `langPath`, `livewirePath`,
+ * `bladeComponentsPath`) if your theme uses a non-standard layout.
  */
 abstract class AbstractThemeServiceProvider extends ServiceProvider
 {
@@ -66,37 +66,60 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
      */
     abstract protected function phpNamespace(): string;
 
-    /**
-     * Absolute path to the theme's Blade view directory.
-     *
-     * <code>return __DIR__.'/../resources/views';</code>
-     */
-    abstract protected function viewsPath(): string;
-
-    /**
-     * Absolute path to the theme's language directory.
-     *
-     * <code>return __DIR__.'/../resources/lang';</code>
-     */
-    abstract protected function langPath(): string;
-
-    /**
-     * Absolute path to the theme's Livewire component directory.
-     *
-     * <code>return __DIR__.'/Livewire';</code>
-     */
-    abstract protected function livewirePath(): string;
-
-    /**
-     * Absolute path to the theme's Blade view-component directory.
-     *
-     * <code>return __DIR__.'/View/Components';</code>
-     */
-    abstract protected function bladeComponentsPath(): string;
-
     // -------------------------------------------------------------------------
     // Virtual getters — concrete defaults, overridable by child theme
     // -------------------------------------------------------------------------
+
+    /**
+     * Absolute path to the theme's Blade view directory.
+     * Defaults to `<package-root>/resources/views`.
+     */
+    protected function viewsPath(): string
+    {
+        return $this->packageRoot().'/resources/views';
+    }
+
+    /**
+     * Absolute path to the theme's language directory.
+     * Defaults to `<package-root>/resources/lang`.
+     */
+    protected function langPath(): string
+    {
+        return $this->packageRoot().'/resources/lang';
+    }
+
+    /**
+     * Absolute path to the theme's Livewire component directory.
+     * Defaults to `<package-root>/src/Livewire`.
+     */
+    protected function livewirePath(): string
+    {
+        return $this->packageRoot().'/src/Livewire';
+    }
+
+    /**
+     * Absolute path to the theme's Blade view-component directory.
+     * Defaults to `<package-root>/src/View/Components`.
+     */
+    protected function bladeComponentsPath(): string
+    {
+        return $this->packageRoot().'/src/View/Components';
+    }
+
+    /**
+     * Resolve the package root by reflecting on the concrete child provider
+     * class, taking its file's directory and walking up one level (since
+     * convention places the child SP at `<package-root>/src/ServiceProvider.php`).
+     *
+     * Override this single method if the SP lives elsewhere — every default
+     * path getter then adjusts automatically.
+     */
+    protected function packageRoot(): string
+    {
+        $reflector = new \ReflectionClass(static::class);
+
+        return dirname((string) $reflector->getFileName(), 2);
+    }
 
     /**
      * The view namespace registered for the theme's Blade templates.
