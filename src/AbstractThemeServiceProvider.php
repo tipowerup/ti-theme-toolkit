@@ -37,18 +37,18 @@ use TiPowerUp\ThemeToolkit\Support\ThemePayloadResolver;
  * view composer using a small set of abstract getters that the child theme
  * implements.
  *
- * Minimal child-theme service provider — only `themeCode()` and `phpNamespace()`
- * are required; paths default to the standard theme layout:
+ * Minimal child-theme service provider — only `themeCode()` is required.
+ * `phpNamespace()` defaults to the SP's own namespace (via reflection) and
+ * paths default to the standard theme layout:
  * <code>
  * class ServiceProvider extends AbstractThemeServiceProvider
  * {
- *     protected function themeCode(): string    { return 'my-theme'; }
- *     protected function phpNamespace(): string { return 'MyVendor\\MyTheme'; }
+ *     protected function themeCode(): string { return 'my-theme'; }
  * }
  * </code>
  *
- * Override any path getter (`viewsPath`, `langPath`, `livewirePath`,
- * `bladeComponentsPath`) if your theme uses a non-standard layout.
+ * Override `phpNamespace()`, `viewsPath()`, `langPath()`, `livewirePath()`,
+ * or `bladeComponentsPath()` if your theme uses a non-standard layout.
  */
 abstract class AbstractThemeServiceProvider extends ServiceProvider
 {
@@ -61,14 +61,22 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
      */
     abstract protected function themeCode(): string;
 
-    /**
-     * Root PHP namespace for the theme's classes, e.g. `'TiPowerUp\\OrangeTw'`.
-     */
-    abstract protected function phpNamespace(): string;
-
     // -------------------------------------------------------------------------
     // Virtual getters — concrete defaults, overridable by child theme
     // -------------------------------------------------------------------------
+
+    /**
+     * Root PHP namespace for the theme's classes, e.g. `'TiPowerUp\\OrangeTw'`.
+     *
+     * Defaults to the namespace of the concrete child SP (resolved via
+     * reflection), since by convention the theme's classes share that
+     * namespace. Override only if the theme's Livewire / Blade components
+     * live under a different namespace from the SP itself.
+     */
+    protected function phpNamespace(): string
+    {
+        return (new \ReflectionClass(static::class))->getNamespaceName();
+    }
 
     /**
      * Absolute path to the theme's Blade view directory.
@@ -219,6 +227,7 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
                 'themeConfig' => controller()->getTheme()?->config ?? [],
                 'themeData' => $payload['themeData'],
                 'themeBrandStyle' => $payload['themeBrandStyle'],
+                'themeNeutralStyle' => $payload['themeNeutralStyle'],
             ]);
 
             if ($payload['primary']) {
@@ -452,6 +461,7 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
                     $payload = resolve(ThemePayloadResolver::class)->resolve();
                     $controller->vars['themeData'] = $payload['themeData'];
                     $controller->vars['themeBrandStyle'] = $payload['themeBrandStyle'];
+                    $controller->vars['themeNeutralStyle'] = $payload['themeNeutralStyle'];
                 });
 
                 $controller->bindEvent('page.init', function ($page) {

@@ -1,7 +1,7 @@
 {
     "name": "@tipowerup/ti-theme-toolkit",
-    "version": "0.2.0",
-    "description": "Shared frontend infrastructure for TiPowerUp TastyIgniter themes — Tailwind preset, Vite preset, dark-mode Alpine store, and CSS token defaults.",
+    "version": "1.0.0",
+    "description": "Shared frontend infrastructure for TiPowerUp TastyIgniter themes — Tailwind v4 theme tokens, Vite preset, dark-mode Alpine store.",
     "type": "module",
     "license": "MIT",
     "author": "TiPowerUp",
@@ -16,7 +16,7 @@
     "keywords": [
         "tastyigniter",
         "tailwind",
-        "tailwind-preset",
+        "tailwindcss-v4",
         "vite",
         "vite-preset",
         "alpinejs",
@@ -24,27 +24,35 @@
         "theme"
     ],
     "files": [
-        "tailwind-preset.js",
         "vite-preset.js",
+        "vite-preset.d.ts",
+        "theme.css",
         "resources/src/**",
         "README.md",
         "LICENSE"
     ],
     "exports": {
-        "./tailwind-preset": "./tailwind-preset.js",
-        "./vite-preset": "./vite-preset.js",
-        "./js/dark-mode": "./resources/src/js/dark-mode.js",
-        "./css/tokens.css": "./resources/src/css/tokens.css"
+        "./vite-preset": {
+            "types": "./vite-preset.d.ts",
+            "default": "./vite-preset.js"
+        },
+        "./theme.css": "./theme.css",
+        "./js/dark-mode": {
+            "types": "./resources/src/js/dark-mode.d.ts",
+            "default": "./resources/src/js/dark-mode.js"
+        }
     },
     "publishConfig": {
         "access": "public"
     },
     "peerDependencies": {
         "alpinejs": "^3.0",
-        "tailwindcss": "^3.4",
-        "vite": "^5.0"
+        "tailwindcss": "^4.0",
+        "vite": "^5.0 || ^6.0"
     },
     "dependencies": {
-        "@tailwindcss/forms": "^0.5"
+        "@tailwindcss/forms": "^0.5.10",
+        "@tailwindcss/typography": "^0.5.16",
+        "@tailwindcss/vite": "^4.0.0"
     }
 }

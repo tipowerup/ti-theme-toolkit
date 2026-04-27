@@ -22,17 +22,20 @@ final class ColorHelper
     ];
 
     /**
-     * Convert #rgb / #rrggbb hex to "r g b" (space-separated, for `rgb(var(...) / <alpha>)`).
+     * Convert #rgb / #rrggbb hex to an `rgb(r g b)` CSS color string,
+     * suitable for direct assignment to a CSS custom property — e.g.
+     * `--color-primary: rgb(249 115 22)`.
      */
     public static function hexToRgb(string $hex): string
     {
         [$r, $g, $b] = self::parseHex($hex);
 
-        return "$r $g $b";
+        return "rgb($r $g $b)";
     }
 
     /**
      * Mix a hex color toward white. $amount 0..1 (higher = closer to white).
+     * Returns an `rgb(r g b)` string.
      */
     public static function tint(string $hex, float $amount): string
     {
@@ -41,11 +44,12 @@ final class ColorHelper
         $g = (int) round($g + (255 - $g) * $amount);
         $b = (int) round($b + (255 - $b) * $amount);
 
-        return "$r $g $b";
+        return "rgb($r $g $b)";
     }
 
     /**
      * Mix a hex color toward black. $amount 0..1 (higher = closer to black).
+     * Returns an `rgb(r g b)` string.
      */
     public static function shade(string $hex, float $amount): string
     {
@@ -54,7 +58,7 @@ final class ColorHelper
         $g = (int) round($g * (1 - $amount));
         $b = (int) round($b * (1 - $amount));
 
-        return "$r $g $b";
+        return "rgb($r $g $b)";
     }
 
     /**

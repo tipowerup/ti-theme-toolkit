@@ -54,6 +54,44 @@ function applyDarkMode(isDark) {
 }
 
 document.addEventListener('alpine:init', () => {
+    /**
+     * `darkMode()` x-data factory. Templates use it as the layout's root
+     * scope (`x-data="darkMode()"`) so descendants can reference `isDark`
+     * directly in directives (`x-show="isDark"`, `:class="{'dark': isDark}"`,
+     * @click="toggleDarkMode()"`, etc.) instead of repeatedly poking
+     * `$store.darkMode.value`.
+     *
+     * Bridges to `Alpine.store('darkMode')` so a single source of truth is
+     * shared across stores, factory instances, and non-Alpine code listening
+     * for `darkmode:changed` events.
+     */
+    // @ts-ignore — Alpine is loaded globally by Livewire
+    Alpine.data('darkMode', () => ({
+        isDark: resolveInitialValue(),
+
+        init() {
+            // Sync this scope's `isDark` whenever the global store changes,
+            // so toggling from any component updates every layout consumer.
+            window.addEventListener('darkmode:changed', (e) => {
+                this.isDark = e.detail.value;
+            });
+        },
+
+        /**
+         * Flip dark mode. Named `toggleDarkMode` to match existing template
+         * conventions (`@click="toggleDarkMode()"`); kept available as
+         * `toggle()` too for shorter call sites.
+         */
+        toggleDarkMode() {
+            // @ts-ignore — Alpine global
+            Alpine.store('darkMode').toggle();
+        },
+
+        toggle() {
+            this.toggleDarkMode();
+        },
+    }));
+
     // @ts-ignore — Alpine is loaded globally by Livewire
     Alpine.store('darkMode', {
         /** @type {boolean} */

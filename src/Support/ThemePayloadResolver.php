@@ -33,13 +33,15 @@ final class ThemePayloadResolver
         'success', 'danger', 'warning', 'info',
     ];
 
-    /** @var array<string, array{themeData: array<string, mixed>, themeBrandStyle: string, primary: ?string}> */
+    private const NEUTRAL_COLOR_KEYS = ['text', 'text_muted', 'body', 'surface', 'border'];
+
+    /** @var array<string, array{themeData: array<string, mixed>, themeBrandStyle: string, themeNeutralStyle: string, primary: ?string}> */
     private array $cache = [];
 
     /**
      * Resolve the theme payload for the currently active theme.
      *
-     * @return array{themeData: array<string, mixed>, themeBrandStyle: string, primary: ?string}
+     * @return array{themeData: array<string, mixed>, themeBrandStyle: string, themeNeutralStyle: string, primary: ?string}
      */
     public function resolve(): array
     {
@@ -55,6 +57,7 @@ final class ThemePayloadResolver
             $this->cache[$code] = [
                 'themeData' => $themeData,
                 'themeBrandStyle' => $this->buildBrandStyle($themeData),
+                'themeNeutralStyle' => $this->buildNeutralStyle($themeData),
                 'primary' => $primary,
             ];
         }
@@ -90,17 +93,48 @@ final class ThemePayloadResolver
 
         $out = '';
         foreach ($vars as $k => $v) {
-            // Defensive: only emit values that match the expected "r g b"
-            // integer-triplet format. Anything else would be a bug upstream
-            // in ColorHelper, but guarding here closes the attribute-escape
-            // surface regardless.
-            if (! preg_match('/^\d{1,3} \d{1,3} \d{1,3}$/', $v)) {
+            // Defensive: only emit values that match the expected
+            // `rgb(r g b)` shape ColorHelper produces. Anything else would
+            // be a bug upstream, but guarding here closes the attribute-
+            // escape surface regardless.
+            if (! preg_match('/^rgb\(\d{1,3} \d{1,3} \d{1,3}\)$/', $v)) {
                 continue;
             }
             $out .= $k.':'.$v.';';
         }
 
         return $out;
+    }
+
+    /**
+     * Build the neutral-color override `<style>` block for light mode.
+     *
+     * Neutrals can't ride on the <html style=""> attribute because they need
+     * to be scoped to `:root:not(.dark)` so dark-mode overrides in the
+     * compiled theme stylesheet still win. Inline styles can't carry that
+     * condition.
+     *
+     * @param  array<string, mixed>  $themeData
+     */
+    public function buildNeutralStyle(array $themeData): string
+    {
+        $colors = $themeData['color'] ?? [];
+
+        $vars = '';
+        foreach (self::NEUTRAL_COLOR_KEYS as $key) {
+            if (empty($colors[$key])) {
+                continue;
+            }
+
+            $value = ColorHelper::hexToRgb($colors[$key]);
+            if (! preg_match('/^rgb\(\d{1,3} \d{1,3} \d{1,3}\)$/', $value)) {
+                continue;
+            }
+
+            $vars .= '--color-'.str_replace('_', '-', $key).':'.$value.';';
+        }
+
+        return $vars === '' ? '' : '<style>:root:not(.dark){'.$vars.'}</style>';
     }
 
     /**

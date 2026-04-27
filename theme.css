@@ -1,0 +1,108 @@
+/**
+ * theme.css — TiPowerUp theme tokens, plugins, and variants for Tailwind v4.
+ *
+ * Import this file in your theme's app.css after `@import "tailwindcss";`:
+ *
+ *   @import "tailwindcss";
+ *   @import "@tipowerup/ti-theme-toolkit/theme.css";
+ *
+ *   @theme {
+ *     // Theme-specific token overrides go here.
+ *   }
+ *
+ * What this file provides:
+ *
+ * - `@theme` block defining the brand-color, semantic, and neutral token
+ *   palette. Tailwind v4 emits these as CSS custom properties on `:root` AND
+ *   generates utilities (`bg-primary`, `text-primary`, `bg-body`, …) keyed
+ *   off them. Utilities reference the variables via `var(--color-*)`, so
+ *   admin-saved palette values applied at runtime (via inline `style=""`
+ *   on `<html>` from ThemePayloadResolver) override the defaults without a
+ *   CSS rebuild.
+ *
+ * - `@plugin` directives loading `@tailwindcss/forms` and
+ *   `@tailwindcss/typography` so themes don't have to declare them.
+ *
+ * - `@custom-variant dark` enabling `dark:` utility variants based on the
+ *   `.dark` class strategy (toggled by the toolkit's Alpine darkMode store).
+ *
+ * - `:root` fallback values and `.dark` neutral overrides for dark mode.
+ *
+ * Runtime-overridable variables (set by ThemePayloadResolver):
+ *   --color-primary, --color-primary-{50,100,400,light,dark,900}
+ *   --color-secondary, --color-secondary-{light,dark}
+ *   --color-success, --color-danger, --color-warning, --color-info
+ *
+ * Theme-controlled neutrals (overridden by `.dark` class):
+ *   --color-text, --color-text-muted
+ *   --color-body, --color-surface, --color-border
+ */
+
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* Brand palette — defaults overridden at runtime by ThemePayloadResolver */
+    --color-primary: rgb(249 115 22);
+    --color-primary-50: rgb(255 247 237);
+    --color-primary-100: rgb(255 237 213);
+    --color-primary-400: rgb(251 146 60);
+    --color-primary-light: rgb(253 186 116);
+    --color-primary-dark: rgb(234 88 12);
+    --color-primary-900: rgb(124 45 18);
+
+    /*
+     * Conventional Tailwind palette aliases. The runtime palette only sets
+     * the named stops above; these aliases let `text-primary-{500,600,700}`
+     * / `bg-primary-{500,600,700}` resolve to admin-saved colors instead of
+     * silently falling through.
+     */
+    --color-primary-500: var(--color-primary);
+    --color-primary-600: var(--color-primary);
+    --color-primary-700: var(--color-primary-dark);
+
+    /* Secondary palette */
+    --color-secondary: rgb(108 117 125);
+    --color-secondary-light: rgb(156 163 175);
+    --color-secondary-dark: rgb(75 85 99);
+
+    /* Semantic status colors */
+    --color-success: rgb(40 167 69);
+    --color-danger: rgb(220 53 69);
+    --color-warning: rgb(255 193 7);
+    --color-info: rgb(23 162 184);
+
+    /* Neutral tokens — light-mode defaults; .dark overrides below */
+    --color-text: rgb(33 37 41);
+    --color-text-muted: rgb(108 117 125);
+    --color-body: rgb(255 255 255);
+    --color-surface: rgb(248 249 250);
+    --color-border: rgb(233 236 239);
+
+    /* Typography */
+    --font-sans: "Inter", system-ui, sans-serif;
+}
+
+
+/* Dark-mode neutral tokens — applied when `html.dark` is present. */
+.dark {
+    --color-text: rgb(248 249 250);
+    --color-text-muted: rgb(173 181 189);
+    --color-body: rgb(33 37 41);
+    --color-surface: rgb(52 58 64);
+    --color-border: rgb(73 80 87);
+}
+
+/*
+ * Safelist palette utilities that get generated dynamically in PHP/Blade
+ * (status badges from PHP arrays, etc.) so v4's content scanner doesn't
+ * purge them.
+ */
+@source inline("{,hover:,focus:,dark:}{bg,text,border,ring}-{primary,secondary,success,danger,warning,info,body,surface,text,text-muted,border}");
+@source inline("{bg,text,border,ring}-primary/{10,20}");
+@source inline("bg-{success,danger,warning,info}/10");
+@source inline("text-primary-{400,light,dark}");
+@source inline("bg-primary-{50,100}");
+@source inline("dark:focus:ring-offset-body");

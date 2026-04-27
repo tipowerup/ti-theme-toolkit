@@ -131,9 +131,18 @@ php artisan igniter:theme-vendor-publish --force
 - **ColorHelper** — Derives primary color palettes automatically. [Learn more →](docs/color-system.md)
 - **ThemePayloadResolver** — Resolves theme data and builds brand-style CSS for server-side rendering. [Learn more →](docs/color-system.md)
 - **BannerManager** — Form widget for hero banner slides. [Learn more →](docs/form-widgets/banner-manager.md)
-- **Dark Mode Store** — Alpine.js store for toggling dark mode with localStorage persistence. [Learn more →](docs/dark-mode.md)
+- **Dark Mode Store** — Alpine.js store for toggling dark mode with localStorage persistence. Ships TypeScript declarations (`dark-mode.d.ts`) so consuming themes get full intellisense. [Learn more →](docs/dark-mode.md)
 - **Tailwind Preset** — Color tokens, darkMode class strategy, safelist. [Learn more →](docs/tailwind-preset.md)
-- **Vite Preset** — Build config for asset pipeline. [Learn more →](docs/vite-preset.md)
+- **Vite Preset** — Build config for asset pipeline. Auto-detects `app.ts` over `app.js` so TypeScript-first themes work without config changes. Ships `.d.ts` types for `toolkitPreset()`. [Learn more →](docs/vite-preset.md)
+
+## TypeScript Support
+
+The toolkit ships hand-written `.d.ts` declarations alongside its JS modules — the same pattern used by Vite, Tailwind, and Alpine. No build step, no compiled artifacts, full intellisense for consumers.
+
+- `vite-preset.d.ts` — types `toolkitPreset(options)` and `ToolkitPresetOptions`
+- `resources/src/js/dark-mode.d.ts` — types `DarkModeStore`, `DarkModeData`, and the `darkmode:changed` window event
+
+Consumer themes (e.g. [`ti-theme-orange-tw`](https://github.com/tipowerup/ti-theme-orange-tw)) can now run TypeScript end-to-end under `strict: true` without `any` leaking through the toolkit boundary.
 
 ## Architecture
 
