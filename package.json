@@ -1,6 +1,6 @@
 {
     "name": "@tipowerup/ti-theme-toolkit",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Shared frontend infrastructure for TiPowerUp TastyIgniter themes — Tailwind preset, Vite preset, dark-mode Alpine store, and CSS token defaults.",
     "type": "module",
     "license": "MIT",
