@@ -391,9 +391,14 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
      */
     protected function loadLivewireComponentsFrom(string|array $path, ?string $livewireNamespace = null): void
     {
+        $paths = array_filter((array) $path, 'is_dir');
+        if ($paths === []) {
+            return;
+        }
+
         $configurableComponents = [];
 
-        $components = (new Finder)->files()->in($path)
+        $components = (new Finder)->files()->in($paths)
             ->name('*.php')
             ->notPath('Concerns')
             ->notPath('Features')
@@ -463,7 +468,12 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
      */
     protected function loadBladeComponentsFrom(string|array $path): void
     {
-        $components = (new Finder)->files()->in($path)
+        $paths = array_filter((array) $path, 'is_dir');
+        if ($paths === []) {
+            return;
+        }
+
+        $components = (new Finder)->files()->in($paths)
             ->name('*.php')
             ->ignoreDotFiles(true)
             ->ignoreVCS(true);
