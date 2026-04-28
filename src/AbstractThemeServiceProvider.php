@@ -12,6 +12,7 @@ use Igniter\Local\Http\Middleware\CheckLocation;
 use Igniter\Local\Models\Location;
 use Igniter\Main\Classes\MainController;
 use Igniter\Main\Classes\ThemeManager;
+use Igniter\Main\Models\Theme;
 use Igniter\Main\Template\Page;
 use Igniter\Main\Traits\ConfigurableComponent;
 use Igniter\System\Classes\ComponentManager;
@@ -257,6 +258,7 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
         $this->registerSocialButtonsViewComposer();
         $this->registerStaticPageResolverPatch();
         $this->registerAutoVendorPublish();
+        $this->registerStorefrontErrorViews();
         $this->configureLivewire();
         $this->configurePageAuthentication();
         $this->configureGoogleFonts();
@@ -412,6 +414,47 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
             } catch (\Throwable $e) {
                 logger()->warning('Auto vendor-publish failed for theme '.$this->themeCode().': '.$e->getMessage());
             }
+        });
+    }
+
+    /**
+     * Wire the theme's `errors/` views into Laravel's exception handler so
+     * storefront 404 / 500 / 503 etc. resolve to the theme's friendly
+     * templates instead of TastyIgniter core's minimal fallback.
+     *
+     * Skipped for admin requests so admin-area exceptions keep rendering
+     * the admin error UI. No-op when the theme ships no `errors/` directory.
+     *
+     * Also binds a composer that injects the theme's brand + neutral CSS
+     * payload into `errors.layout` — Laravel's exception handler renders
+     * outside any TI controller, so the wildcard composer (which early-
+     * returns when `controller()` is null) doesn't fire there.
+     */
+    protected function registerStorefrontErrorViews(): void
+    {
+        if (Igniter::runningInAdmin()) {
+            return;
+        }
+
+        $errorsPath = $this->viewsPath().'/errors';
+        if (! is_dir($errorsPath)) {
+            return;
+        }
+
+        $paths = $this->app['config']['view.paths'] ?? [];
+        if (! in_array($this->viewsPath(), $paths, true)) {
+            array_unshift($paths, $this->viewsPath());
+            $this->app['config']->set('view.paths', $paths);
+        }
+
+        ViewFacade::composer($this->viewNamespace().'::errors.layout', function (View $view): void {
+            $themeData = Theme::where('code', $this->themeCode())->value('data') ?? [];
+            $resolver = resolve(ThemePayloadResolver::class);
+
+            $view->with([
+                'themeBrandStyle' => $resolver->buildBrandStyle($themeData),
+                'themeNeutralStyle' => $resolver->buildNeutralStyle($themeData),
+            ]);
         });
     }
 

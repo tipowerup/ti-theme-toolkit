@@ -6,6 +6,21 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-28
+
+### Added
+
+- **Storefront error views auto-wired** — new
+  `AbstractThemeServiceProvider::registerStorefrontErrorViews()` pushes the
+  theme's `resources/views` onto `config('view.paths')` so Laravel's
+  exception handler resolves `errors::404` / `errors::500` etc. to the
+  theme's templates instead of TastyIgniter core's minimal fallback. Gated
+  on `! Igniter::runningInAdmin()` so admin-area exceptions keep rendering
+  the admin error UI, and a no-op when the theme ships no `errors/`
+  directory. Also binds a composer that injects `themeBrandStyle` /
+  `themeNeutralStyle` into `errors.layout` (the wildcard composer can't,
+  since the exception handler renders outside any TI controller).
+
 ## [0.4.0] - 2026-04-28
 
 ### Added
