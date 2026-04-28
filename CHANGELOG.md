@@ -4,9 +4,27 @@ All notable changes to `tipowerup/ti-theme-toolkit` are documented here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] / [0.3.0]
+## [Unreleased]
 
-Two unrelated lines of work ship together in this minor bump.
+## [0.4.0] - 2026-04-28
+
+### Added
+
+- **Auto-publish theme assets on activation** — new
+  `AbstractThemeServiceProvider::registerAutoVendorPublish()` listens on
+  `main.theme.activated` and runs `igniter:theme-vendor-publish --theme=<code> --force`
+  in-process when the theme matching the SP's `themeCode()` is activated.
+  Closes the gap where TastyIgniter only auto-publishes during
+  `igniter:install` — themes installed and activated afterwards no longer
+  ship with missing favicons / fallback logos / static assets until an
+  admin remembers to run the command. Listener is scoped to the active
+  theme (so other toolkit-using themes don't cross-publish), skipped under
+  `runningUnitTests()`, and wraps the artisan call in a try/catch — a
+  failed publish logs a warning instead of breaking activation.
+
+## [0.3.0] - 2026-04-28
+
+Two unrelated lines of work shipped together in this minor bump.
 
 ### Tailwind v4 migration + TypeScript declarations
 

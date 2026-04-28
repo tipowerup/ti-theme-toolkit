@@ -16,6 +16,7 @@ use Igniter\Main\Template\Page;
 use Igniter\Main\Traits\ConfigurableComponent;
 use Igniter\System\Classes\ComponentManager;
 use Igniter\User\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
@@ -255,6 +256,7 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
         $this->registerEuCookieBannerViewComposer();
         $this->registerSocialButtonsViewComposer();
         $this->registerStaticPageResolverPatch();
+        $this->registerAutoVendorPublish();
         $this->configureLivewire();
         $this->configurePageAuthentication();
         $this->configureGoogleFonts();
@@ -374,6 +376,42 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
                 'url' => $pageUrl,
                 'isActive' => rawurldecode($pageUrl) === rawurldecode($url),
             ];
+        });
+    }
+
+    /**
+     * Auto-publish theme assets on activation.
+     *
+     * TastyIgniter only runs `igniter:theme-vendor-publish` once during the
+     * initial `igniter:install`. A theme installed and activated afterwards
+     * has no published `public/vendor/<code>/` assets until an admin
+     * remembers to run the command manually — favicons, fallback logos and
+     * any other shipped static asset 404 in the meantime.
+     *
+     * Listen for `main.theme.activated`, scope the publish to *this* theme
+     * (so other toolkit-using themes don't republish each other's assets),
+     * and run the command silently. Failures are swallowed because losing a
+     * publish shouldn't block activation.
+     */
+    protected function registerAutoVendorPublish(): void
+    {
+        if ($this->app->runningUnitTests()) {
+            return;
+        }
+
+        Event::listen('main.theme.activated', function ($theme): void {
+            if ($theme?->code !== $this->themeCode()) {
+                return;
+            }
+
+            try {
+                Artisan::call('igniter:theme-vendor-publish', [
+                    '--theme' => $this->themeCode(),
+                    '--force' => true,
+                ]);
+            } catch (\Throwable $e) {
+                logger()->warning('Auto vendor-publish failed for theme '.$this->themeCode().': '.$e->getMessage());
+            }
         });
     }
 
