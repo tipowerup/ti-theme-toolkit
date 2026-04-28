@@ -11,10 +11,13 @@ jobs:
     name: Pest (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
 
+    # Runtime supports PHP 8.2+ (see composer.json `require`), but the dev
+    # toolchain (Pest 4) requires PHP 8.3+. CI tests on 8.3 only; production
+    # consumers on 8.2 are still supported by the source code.
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.2', '8.3']
+        php: ['8.3']
 
     steps:
       - name: Checkout
