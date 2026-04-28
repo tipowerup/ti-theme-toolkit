@@ -67,7 +67,7 @@ protected function livewirePath(): string
 }
 ```
 
-The scanner looks for `*.php` files, excludes `*Form.php`, `Concerns/`, `Features/`, and `Forms/` subdirectories.
+The scanner looks for `*.php` files and excludes the `Concerns/`, `Features/`, and `Forms/` subdirectories. Forms helper classes (Livewire `Form` subclasses living in `Forms/`) aren't registered as full components.
 
 ### bladeComponentsPath() : string
 
@@ -248,10 +248,19 @@ These are added to Livewire as persistent middleware so they survive component u
 
 ### Livewire Components
 
-Files in `livewirePath()`:
-- Pattern: `*.php` (excludes `*Form.php`, `Concerns/`, `Features/`, `Forms/`)
-- **ConfigurableComponent trait**: Registered with TastyIgniter ComponentManager via `componentMeta()`.
+The auto-loader scans **two paths in order** and registers everything under the active theme's `viewNamespace()`:
+
+1. **Toolkit-shipped components** (`<toolkit-root>/src/Livewire/`) — auth flow (`Login`, `Register`, `ResetPassword`, `Socialite`), `Contact`, `NewsletterSubscribeForm`, etc. Their `componentMeta()` uses `{ns}` and `{lang}` placeholders that the loader substitutes with the active theme's view and translation namespaces. Their `render()` resolves `view($this->resolveViewNamespace().'::livewire.<name>')` at runtime so each theme's blade view wins.
+2. **Theme components** (`livewirePath()`) — the theme's own `src/Livewire/` directory. Livewire registration is **last-writer-wins**, so a theme can drop a class with the same relative path (e.g. `src/Livewire/Login.php`) extending the toolkit's class to add custom behaviour, or replacing it entirely.
+
+Filter rules for both passes:
+- Pattern: `*.php` (subdirectories `Concerns/`, `Features/`, `Forms/` excluded)
+- **ConfigurableComponent trait**: Registered with TastyIgniter ComponentManager via `componentMeta()` (placeholders resolved).
 - **Regular Livewire**: Registered with Livewire under `{viewNamespace()}::{kebab-name}`.
+
+#### Container binding
+
+`AbstractThemeServiceProvider::boot()` binds the active theme's view namespace as `tipowerup.theme.viewNamespace`. Toolkit Livewire components use it as a fallback when `controller()` returns null (e.g. under testbench or Livewire test runners) — `controller()?->getTheme()?->getName() ?? app('tipowerup.theme.viewNamespace')`.
 
 ### Blade Components
 

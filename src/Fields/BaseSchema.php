@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TiPowerUp\ThemeToolkit\Fields;
 
+use Igniter\Pages\Models\Page;
+
 /**
  * BaseSchema provides the canonical 7-tab field structure shared across all
  * TiPowerUp themes. Child themes compose their `fields.php` by calling
@@ -285,8 +287,8 @@ final class BaseSchema
                         'type' => 'select',
                         // Guarded so themes without the igniter-pages extension
                         // can still use BaseSchema without a hard dependency.
-                        'options' => class_exists(\Igniter\Pages\Models\Page::class)
-                            ? \Igniter\Pages\Models\Page::getDropdownOptions(...)
+                        'options' => class_exists(Page::class)
+                            ? Page::getDropdownOptions(...)
                             : [],
                         'rules' => 'nullable|string',
                     ],

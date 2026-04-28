@@ -9,6 +9,7 @@ use Igniter\Admin\Widgets\Form;
 use Igniter\Cart\Http\Middleware\CartMiddleware;
 use Igniter\Flame\Support\Facades\Igniter;
 use Igniter\Local\Http\Middleware\CheckLocation;
+use Igniter\Local\Models\Location;
 use Igniter\Main\Classes\MainController;
 use Igniter\Main\Classes\ThemeManager;
 use Igniter\Main\Template\Page;
@@ -18,6 +19,7 @@ use Igniter\User\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -203,9 +205,23 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
     {
         $this->registerFormWidgets();
 
+        // Cache the active theme's view namespace in the container so toolkit
+        // Livewire components (which can't extend this SP) can resolve it at
+        // render time without needing a TI MainController — falls back here
+        // when running under testbench / Livewire tests where `controller()`
+        // is null.
+        $this->app->instance('tipowerup.theme.viewNamespace', $this->viewNamespace());
+
         $this->loadViewsFrom($this->viewsPath(), $this->viewNamespace());
         $this->loadTranslationsFrom($this->langPath(), $this->translationNamespace());
         $this->loadBladeComponentsFrom($this->bladeComponentsPath());
+
+        // Toolkit-shipped Livewire components (auth flow, etc.) register first
+        // under the active theme's view namespace. Then the theme's own
+        // src/Livewire/ scan runs — Livewire registration is last-writer-wins,
+        // so any class a theme provides under the same name overrides the
+        // toolkit default (subclass to inherit + customise, or replace fully).
+        $this->loadLivewireComponentsFrom(__DIR__.'/Livewire', 'TiPowerUp\\ThemeToolkit\\Livewire\\');
         $this->loadLivewireComponentsFrom($this->livewirePath());
 
         // Define layout aliases.
@@ -238,7 +254,7 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
         $this->registerContactViewComposers();
         $this->registerEuCookieBannerViewComposer();
         $this->registerSocialButtonsViewComposer();
-        $this->registerMobileMenuViewComposer();
+        $this->registerStaticPageResolverPatch();
         $this->configureLivewire();
         $this->configurePageAuthentication();
         $this->configureGoogleFonts();
@@ -256,12 +272,11 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
     {
         $views = [
             "{$this->viewNamespace()}::includes.contact.info",
-            "{$this->viewNamespace()}::includes.contact.map",
             "{$this->viewNamespace()}::includes.contact.hours",
         ];
 
         ViewFacade::composer($views, function (View $view): void {
-            $location = \Igniter\Local\Models\Location::getDefault();
+            $location = Location::getDefault();
             $view->with('defaultLocation', $location);
         });
     }
@@ -320,30 +335,45 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
     }
 
     /**
-     * Share main-menu items with the mobile menu partial.
+     * Workaround for an upstream bug in tastyigniter/ti-ext-pages where
+     * Igniter\Pages\Classes\Page::resolveMenuItem() filters the cached page
+     * collection but discards the filtered result, so every static-page menu
+     * item resolves to the alphabetically-first published page.
+     *
+     * Registers a second listener on `pages.menuitem.resolveItem` that resolves
+     * the reference correctly. MenuManager iterates all listener responses and
+     * overwrites `url` per response; this listener registers after the buggy
+     * core one (theme service providers boot after extensions), so its correct
+     * URL wins.
+     *
+     * TODO: remove once https://github.com/tastyigniter/ti-ext-pages/pull/21
+     * is merged and the fix lands in a released version.
      */
-    protected function registerMobileMenuViewComposer(): void
+    protected function registerStaticPageResolverPatch(): void
     {
-        ViewFacade::composer("{$this->viewNamespace()}::includes.navs.mobile-menu", function (View $view): void {
-            $menuItems = [];
+        if (! class_exists(\Igniter\Pages\Models\Page::class)) {
+            return;
+        }
 
-            try {
-                $themeCode = controller()?->getTheme()?->getName();
-                if ($themeCode) {
-                    $menu = \Igniter\Pages\Models\Menu::whereCode('main-menu')
-                        ->where('theme_code', $themeCode)
-                        ->first();
-
-                    if ($menu) {
-                        $menuItems = resolve(\Igniter\Pages\Classes\MenuManager::class)
-                            ->generateReferences($menu, controller()->getLayout());
-                    }
-                }
-            } catch (\Throwable) {
-                // Pages extension not installed — leave empty.
+        Event::listen('pages.menuitem.resolveItem', function ($item, string $url, $theme): ?array {
+            if (! $theme || $item->type !== 'static-page' || ! $item->reference) {
+                return null;
             }
 
-            $view->with('menuItems', $menuItems);
+            $page = \Igniter\Pages\Models\Page::whereIsEnabled()
+                ->where('page_id', $item->reference)
+                ->first();
+
+            if (! $page) {
+                return null;
+            }
+
+            $pageUrl = URL::to($page->permalink_slug);
+
+            return [
+                'url' => $pageUrl,
+                'isActive' => rawurldecode($pageUrl) === rawurldecode($url),
+            ];
         });
     }
 
@@ -359,20 +389,19 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
      * `componentMeta()`). All other Livewire components are registered under
      * `{viewNamespace}::{kebab-name}`.
      */
-    protected function loadLivewireComponentsFrom(string|array $path): void
+    protected function loadLivewireComponentsFrom(string|array $path, ?string $livewireNamespace = null): void
     {
         $configurableComponents = [];
 
         $components = (new Finder)->files()->in($path)
             ->name('*.php')
-            ->notName('*Form.php')
             ->notPath('Concerns')
             ->notPath('Features')
             ->notPath('Forms')
             ->ignoreDotFiles(true)
             ->ignoreVCS(true);
 
-        $livewireNamespace = $this->phpNamespace().'\\Livewire\\';
+        $livewireNamespace ??= $this->phpNamespace().'\\Livewire\\';
 
         foreach ($components as $component) {
             $componentName = Str::of($component->getRelativePathname())
@@ -398,10 +427,31 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
         resolve(ComponentManager::class)->registerCallback(function ($manager) use ($configurableComponents): void {
             foreach ($configurableComponents as $componentClass) {
                 if (method_exists($componentClass, 'componentMeta')) {
-                    $manager->registerComponent($componentClass, $componentClass::componentMeta());
+                    $manager->registerComponent($componentClass, $this->resolveComponentMeta($componentClass::componentMeta()));
                 }
             }
         });
+    }
+
+    /**
+     * Substitute `{ns}` and `{lang}` placeholders in a component's meta array
+     * with the active theme's view and translation namespaces, so toolkit
+     * components register under the right theme-scoped descriptors.
+     */
+    protected function resolveComponentMeta(array $meta): array
+    {
+        $replacements = [
+            '{ns}' => $this->viewNamespace(),
+            '{lang}' => $this->translationNamespace(),
+        ];
+
+        foreach (['code', 'name', 'description'] as $key) {
+            if (isset($meta[$key]) && is_string($meta[$key])) {
+                $meta[$key] = strtr($meta[$key], $replacements);
+            }
+        }
+
+        return $meta;
     }
 
     /**

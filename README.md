@@ -1,6 +1,6 @@
 # TiPowerUp Theme Toolkit
 
-A shared PHP + frontend infrastructure package for TastyIgniter themes. Ship a custom theme in under 50 lines of PHP by extending `AbstractThemeServiceProvider`, inheriting color palettes, form widgets, Livewire features, dark mode, and a curated field schema.
+A shared PHP + frontend infrastructure package for TastyIgniter themes. Ship a custom theme in under 50 lines of PHP by extending `AbstractThemeServiceProvider`, inheriting color palettes, form widgets, ready-made Livewire components (auth flow, contact, newsletter), dark mode, and a curated field schema.
 
 ## Requirements
 

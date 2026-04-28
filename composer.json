@@ -26,9 +26,21 @@
         "tastyigniter/core": "^4.0",
         "livewire/livewire": "^3.0"
     },
+    "require-dev": {
+        "laravel/pint": "^1.2",
+        "mockery/mockery": "^1.6",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "tipowerup/testbench": "^0.1"
+    },
     "autoload": {
         "psr-4": {
             "TiPowerUp\\ThemeToolkit\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TiPowerUp\\ThemeToolkit\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -38,6 +50,20 @@
             ]
         }
     },
+    "scripts": {
+        "test:lint": "vendor/bin/pint --test --ansi",
+        "test:lint-fix": "vendor/bin/pint --ansi",
+        "test:pest": "vendor/bin/pest --compact",
+        "test": [
+            "@test:lint",
+            "@test:pest"
+        ]
+    },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
 }
