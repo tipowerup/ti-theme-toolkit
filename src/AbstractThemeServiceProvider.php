@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -256,7 +255,7 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
         $this->registerContactViewComposers();
         $this->registerEuCookieBannerViewComposer();
         $this->registerSocialButtonsViewComposer();
-        $this->registerStaticPageResolverPatch();
+        $this->registerLivewirePaginationOverride();
         $this->registerAutoVendorPublish();
         $this->registerStorefrontErrorViews();
         $this->configureLivewire();
@@ -339,46 +338,21 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
     }
 
     /**
-     * Workaround for an upstream bug in tastyigniter/ti-ext-pages where
-     * Igniter\Pages\Classes\Page::resolveMenuItem() filters the cached page
-     * collection but discards the filtered result, so every static-page menu
-     * item resolves to the alphabetically-first published page.
-     *
-     * Registers a second listener on `pages.menuitem.resolveItem` that resolves
-     * the reference correctly. MenuManager iterates all listener responses and
-     * overwrites `url` per response; this listener registers after the buggy
-     * core one (theme service providers boot after extensions), so its correct
-     * URL wins.
-     *
-     * TODO: remove once https://github.com/tastyigniter/ti-ext-pages/pull/21
-     * is merged and the fix lands in a released version.
+     * Livewire's WithPagination trait overrides Paginator::defaultView() on
+     * every render with `livewire::<theme>` (theme defaults to 'tailwind').
+     * Prepending the theme's own location onto the `livewire` view namespace
+     * lets `livewire-pagination/tailwind.blade.php` resolve first, replacing
+     * Livewire's built-in pagination view with the theme's restyled one.
      */
-    protected function registerStaticPageResolverPatch(): void
+    protected function registerLivewirePaginationOverride(): void
     {
-        if (! class_exists(\Igniter\Pages\Models\Page::class)) {
+        $override = $this->viewsPath().'/livewire-pagination';
+
+        if (! is_dir($override)) {
             return;
         }
 
-        Event::listen('pages.menuitem.resolveItem', function ($item, string $url, $theme): ?array {
-            if (! $theme || $item->type !== 'static-page' || ! $item->reference) {
-                return null;
-            }
-
-            $page = \Igniter\Pages\Models\Page::whereIsEnabled()
-                ->where('page_id', $item->reference)
-                ->first();
-
-            if (! $page) {
-                return null;
-            }
-
-            $pageUrl = URL::to($page->permalink_slug);
-
-            return [
-                'url' => $pageUrl,
-                'isActive' => rawurldecode($pageUrl) === rawurldecode($url),
-            ];
-        });
+        ViewFacade::prependNamespace('livewire', $override);
     }
 
     /**
