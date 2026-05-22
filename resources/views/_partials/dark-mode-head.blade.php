@@ -1,10 +1,3 @@
-{{--
-    Synchronous dark-mode class application — MUST be rendered as early as
-    possible in <head>, before any stylesheet loads. Prevents flash-of-wrong-
-    theme between initial paint and Alpine's async store init. Mirrors the
-    localStorage + prefers-color-scheme logic in `js/dark-mode.js` so the
-    two sources of truth stay in sync.
---}}
 <script data-navigate-track>
     (function () {
         try {
@@ -14,6 +7,6 @@
             if (isDark) {
                 document.documentElement.classList.add('dark');
             }
-        } catch (e) { /* storage blocked — leave default */ }
+        } catch (e) { }
     })();
 </script>
