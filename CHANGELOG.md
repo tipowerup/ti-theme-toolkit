@@ -6,6 +6,19 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-07-17
+
+### Fixed
+
+- **Storefront error views scoped to the active theme** —
+  `AbstractThemeServiceProvider::registerStorefrontErrorViews()` now bails
+  out unless `ThemeManager::getActiveThemeCode()` matches the provider's own
+  `themeCode()`. Previously it unconditionally unshifted the theme's
+  `resources/views` onto the global `view.paths` config, so with more than
+  one toolkit-based theme installed, whichever theme's service provider
+  booted last would win Laravel's unnamespaced `errors.404`/`errors.500`
+  resolution — regardless of which theme TastyIgniter actually had active.
+
 ## [0.5.0] - 2026-04-28
 
 ### Added

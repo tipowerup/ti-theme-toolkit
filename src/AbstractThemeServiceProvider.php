@@ -410,6 +410,10 @@ abstract class AbstractThemeServiceProvider extends ServiceProvider
             return;
         }
 
+        if (resolve(ThemeManager::class)->getActiveThemeCode() !== $this->themeCode()) {
+            return;
+        }
+
         $errorsPath = $this->viewsPath().'/errors';
         if (! is_dir($errorsPath)) {
             return;
